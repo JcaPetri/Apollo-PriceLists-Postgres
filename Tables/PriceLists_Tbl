@@ -1,18 +1,40 @@
 -- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 -- Create the PriceLists_Tbl table
--- Contains the articles information. 
+-- Contains the price list information. 
 -- The pricelists exists since you create them in this table. 
--- It`s information, of what are they, are in the PrlDataElements table.
+-- It`s information, of what are they, are in the PrlDataElements_Tbl.
 -- The primary key: is pricelistIDn + pricelistownerIDn field and must be unique for each business unit.
+-- we create a unique IDNum because this is used with the PriceListArticles_Tbl
 
 -- #########################################################################################################################################################################################
--- First create the Table
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- First create the sequence PriceLists_seq
+-- 
+DROP SEQUENCE IF EXISTS public."PriceLists_Seq" CASCADE;
+
+CREATE SEQUENCE public."PriceLists_Seq"
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public."PriceLists_Seq"
+    OWNER TO postgres;
+
+COMMENT ON SEQUENCE public."PriceLists_Seq"
+    IS 'The sequence PriceLists_Tbl_seq generate the nextval of the IDNum';
+
+-- #########################################################################################################################################################################################
+-- Second create the Table
 -- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Table: public.PriceLists_Tbl
 DROP TABLE IF EXISTS public."PriceLists_Tbl" CASCADE;
 
 CREATE TABLE IF NOT EXISTS public."PriceLists_Tbl"
 (
+    "IDNum" integer NOT NULL DEFAULT nextval('"PriceLists_Seq"'::regclass),
+    "ID" uuid NOT NULL DEFAULT uuid_generate_v4 (),
     "PriceListIDn" integer NOT NULL,
     "PriceListOwnerIDn" integer NOT NULL,
     "BusinessUnitIDn" integer NOT NULL,
@@ -28,7 +50,8 @@ CREATE TABLE IF NOT EXISTS public."PriceLists_Tbl"
     "DateCreated" timestamp with time zone NOT NULL,
     "DateTimeStamp" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "TableHistory" text COLLATE pg_catalog."default",
-    CONSTRAINT "PrlPk_PriceListIDn" PRIMARY KEY ("PriceListIDn"),
+    CONSTRAINT "PrlPk_IDNum" PRIMARY KEY ("IDNum"),
+    CONSTRAINT "PrlUnique_ID" UNIQUE ("ID"),
     CONSTRAINT "PrlUnique_IDPriceListOwnerBusinessUnit" UNIQUE ("PriceListIDn", "PriceListOwnerIDn", "BusinessUnitIDn")
 )
 
@@ -41,10 +64,17 @@ ALTER TABLE IF EXISTS public."PriceLists_Tbl"
 -- Create the comments of the table fields elements
 -- 
 COMMENT ON TABLE public."PriceLists_Tbl"
-    IS 'Contains the articles information. 
+    IS 'Contains the price list information. 
 The pricelists exists since you create them in this table. 
-It`s information, of what are they, are in the PrlDataElements table.
-The primary key: is pricelistIDn field and must be unique for each business unit.';
+It`s information, of what are they, are in the PrlDataElements_Tbl.
+The primary key: is pricelistIDn + pricelistownerIDn field and must be unique for each business unit.
+we create a unique IDNum because it is used by PriceListArticles_Tbl.';
+
+COMMENT ON COLUMN public."PriceLists_Tbl"."IDNum"
+    IS 'The IDNum is the autoincrement number';
+
+COMMENT ON COLUMN public."PriceLists_Tbl"."ID"
+    IS 'The ID is the uniqueidentifier auto generated V4';
 
 COMMENT ON COLUMN public."PriceLists_Tbl"."PriceListIDn"
     IS 'The PriceListIDn is the IDNum of the price list. Link with the diccionary table - PrlDataElement.';
@@ -94,9 +124,6 @@ COMMENT ON COLUMN public."PriceLists_Tbl"."TableHistory"
 -- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Create the comments of the constraint elements
 -- 
-COMMENT ON CONSTRAINT "PrlPk_PriceListIDn" ON public."PriceLists_Tbl"
-    IS 'The PriceListIDn came from the PrlDataElements, thats is a integer generated value.';
-
 COMMENT ON CONSTRAINT "PrlUnique_IDPriceListOwnerBusinessUnit" ON public."PriceLists_Tbl"
     IS 'A PriceList has an owner and can be unique for a business unit.';
 
@@ -173,6 +200,7 @@ BEGIN
 	ELSE
 		v_TableHistoryOld := OLD."TableHistory";
 		v_TableHistory = '';
+		IF NEW."PriceListIDn" <> OLD."PriceListIDn" THEN v_TableHistory := OLD."PriceListIDn"; ELSE v_TableHistory := '†'; END IF;
 		IF NEW."PriceListOwnerIDn" <> OLD."PriceListOwnerIDn" THEN v_TableHistory := OLD."PriceListOwnerIDn"; ELSE v_TableHistory := '†'; END IF;
 		IF NEW."BusinessUnitIDn" <> OLD."BusinessUnitIDn" THEN v_TableHistory := OLD."BusinessUnitIDn"; ELSE v_TableHistory := '†'; END IF;
 		IF NEW."CurrencyIDn" <> OLD."CurrencyIDn" THEN v_TableHistory := OLD."CurrencyIDn"; ELSE v_TableHistory := '†'; END IF;
