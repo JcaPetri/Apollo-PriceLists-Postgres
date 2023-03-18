@@ -63,10 +63,10 @@ CREATE TABLE public."PrlDataElements_Tbl"
     "DateCreated" timestamp with time zone NOT NULL,
     "DateTimeStamp" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "TableHistory" text,
-    CONSTRAINT "PrlPk_IDNum" PRIMARY KEY ("IDNum"),
-    CONSTRAINT "PrlUnique_ID" UNIQUE ("ID"),
-    CONSTRAINT "PrlUnique_IDNameScopeBusUnitLang" UNIQUE ("IDName", "ScopeIDn", "BusinessUnitIDn", "LanguageIDn"),
-    CONSTRAINT "PrlUnique_IDScopeIDCode" UNIQUE ("ScopeIDn", "IDCode")
+    CONSTRAINT "PdePk_IDNum" PRIMARY KEY ("IDNum"),
+    CONSTRAINT "PdeUnique_ID" UNIQUE ("ID"),
+    CONSTRAINT "PdeUnique_IDNameScopeBusUnitLang" UNIQUE ("IDName", "ScopeIDn", "BusinessUnitIDn", "LanguageIDn"),
+    CONSTRAINT "PdeUnique_IDScopeIDCode" UNIQUE ("ScopeIDn", "IDCode")
 );
 
 ALTER TABLE IF EXISTS public."PrlDataElements_Tbl"
@@ -148,17 +148,17 @@ COMMENT ON COLUMN public."PrlDataElements_Tbl"."TableHistory"
 -- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Create the comments of the constraint elements
 -- 
-COMMENT ON CONSTRAINT "PrlPk_IDNum" ON public."PrlDataElements_Tbl"
+COMMENT ON CONSTRAINT "PdePk_IDNum" ON public."PrlDataElements_Tbl"
     IS 'The sequence PrlDataElements_Tbl_seq generate the nextval';
 
-COMMENT ON CONSTRAINT "PrlUnique_ID" ON public."PrlDataElements_Tbl"
+COMMENT ON CONSTRAINT "PdeUnique_ID" ON public."PrlDataElements_Tbl"
     IS 'Is the uniqueidentifier';
 
-COMMENT ON CONSTRAINT "PrlUnique_IDNameScopeBusUnitLang" ON public."PrlDataElements_Tbl"
+COMMENT ON CONSTRAINT "PdeUnique_IDNameScopeBusUnitLang" ON public."PrlDataElements_Tbl"
     IS 'A name can be unique for a ScopeId, for a BusinessUnitId, and LanguageId.
 Thats mean, Pampa can be a brand or a thin, depend of its scope.';
 
-COMMENT ON CONSTRAINT "PrlUnique_IDScopeIDCode" ON public."PrlDataElements_Tbl"
+COMMENT ON CONSTRAINT "PdeUnique_IDScopeIDCode" ON public."PrlDataElements_Tbl"
     IS 'A CodeId can be unique for a ScopeId, for a BusinessUnitId.';
 
 -- #########################################################################################################################################################################################
