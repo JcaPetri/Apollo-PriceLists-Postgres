@@ -3,7 +3,7 @@
 -- Contains the articles information. 
 -- The pricelists exists since you create them in this table. 
 -- It`s information, of what are they, are in the PrlDataElements table.
--- The primary key: is pricelistIDn field and must be unique for each business unit.
+-- The primary key: is pricelistIDn + pricelistownerIDn field and must be unique for each business unit.
 
 -- #########################################################################################################################################################################################
 -- First create the Table
@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS public."PriceLists_Tbl" CASCADE;
 CREATE TABLE IF NOT EXISTS public."PriceLists_Tbl"
 (
     "PriceListIDn" integer NOT NULL,
+    "PriceListOwnerIDn" integer NOT NULL,
     "BusinessUnitIDn" integer NOT NULL,
     "CurrencyIDn" integer NOT NULL,
     "PriceListDecimal" smallint NOT NULL,
@@ -28,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public."PriceLists_Tbl"
     "DateTimeStamp" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "TableHistory" text COLLATE pg_catalog."default",
     CONSTRAINT "PrlPk_PriceListIDn" PRIMARY KEY ("PriceListIDn"),
-    CONSTRAINT "PrlUnique_IDPriceListBusinessUnit" UNIQUE ("PriceListIDn", "BusinessUnitIDn")
+    CONSTRAINT "PrlUnique_IDPriceListOwnerBusinessUnit" UNIQUE ("PriceListIDn", "PriceListOwnerIDn", "BusinessUnitIDn")
 )
 
 TABLESPACE pg_default;
@@ -47,6 +48,9 @@ The primary key: is pricelistIDn field and must be unique for each business unit
 
 COMMENT ON COLUMN public."PriceLists_Tbl"."PriceListIDn"
     IS 'The PriceListIDn is the IDNum of the price list. Link with the diccionary table - PrlDataElement.';
+
+COMMENT ON COLUMN public."PriceLists_Tbl"."PriceListOwnerIDn"
+    IS 'The PriceListOwnerIDn is the IDNum of the owner that the price list belong.';
 
 COMMENT ON COLUMN public."PriceLists_Tbl"."BusinessUnitIDn"
     IS 'The BusinessUnitIDn is the business unit that the price list belong.';
@@ -93,9 +97,8 @@ COMMENT ON COLUMN public."PriceLists_Tbl"."TableHistory"
 COMMENT ON CONSTRAINT "PrlPk_PriceListIDn" ON public."PriceLists_Tbl"
     IS 'The PriceListIDn came from the PrlDataElements, thats is a integer generated value.';
 
-COMMENT ON CONSTRAINT "PrlUnique_IDPriceListBusinessUnit" ON public."PriceLists_Tbl"
-    IS 'A PriceList can be unique for a business unit.';
-
+COMMENT ON CONSTRAINT "PrlUnique_IDPriceListOwnerBusinessUnit" ON public."PriceLists_Tbl"
+    IS 'A PriceList has an owner and can be unique for a business unit.';
 
 -- #########################################################################################################################################################################################
 -- Second create the trigger before insert
@@ -170,6 +173,7 @@ BEGIN
 	ELSE
 		v_TableHistoryOld := OLD."TableHistory";
 		v_TableHistory = '';
+		IF NEW."PriceListOwnerIDn" <> OLD."PriceListOwnerIDn" THEN v_TableHistory := OLD."PriceListOwnerIDn"; ELSE v_TableHistory := '†'; END IF;
 		IF NEW."BusinessUnitIDn" <> OLD."BusinessUnitIDn" THEN v_TableHistory := OLD."BusinessUnitIDn"; ELSE v_TableHistory := '†'; END IF;
 		IF NEW."CurrencyIDn" <> OLD."CurrencyIDn" THEN v_TableHistory := OLD."CurrencyIDn"; ELSE v_TableHistory := '†'; END IF;
 		IF NEW."PriceListDecimal" <> OLD."PriceListDecimal" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."PriceListDecimal"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
