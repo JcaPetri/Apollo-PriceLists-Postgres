@@ -1,0 +1,228 @@
+-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+-- Create the PriceListArticles_Tbl table
+-- Contains information on the prices of the items. 
+-- For each PriceListArticles you can have multiples articles with its prices.
+-- The unique key: are the join of the pricelistIDn + articlesIDn fields.
+
+-- #########################################################################################################################################################################################
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- First create the sequence PriceListArticles_seq
+-- 
+DROP SEQUENCE IF EXISTS public."PriceListArticles_Seq" CASCADE;
+
+CREATE SEQUENCE public."PriceListArticles_Seq"
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public."PriceListArticles_Seq"
+    OWNER TO postgres;
+
+COMMENT ON SEQUENCE public."PriceListArticles_Seq"
+    IS 'The sequence PriceListArticles_Tbl_seq generate the nextval of the IDNum';
+
+-- #########################################################################################################################################################################################
+-- Second create the Table
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Table: public.PriceListArticles_Tbl
+DROP TABLE IF EXISTS public."PriceListArticles_Tbl" CASCADE;
+
+CREATE TABLE IF NOT EXISTS public."PriceListArticles_Tbl"
+(
+    "IDNum" integer NOT NULL DEFAULT nextval('"PriceListArticles_Seq"'::regclass),
+    "ID" uuid NOT NULL DEFAULT uuid_generate_v4 (),
+    "ArticlesIDn" integer NOT NULL,
+    "PriceListIDn" integer NOT NULL,
+    "Price" numeric(19, 6) NOT NULL,
+    "PriceListCode" character varying(250),
+    "DatePriceListArticle" timestamp with time zone NOT NULL,
+    "StateIDn" smallint NOT NULL,
+    "CreatedByIDn" integer NOT NULL,
+    "LastModifiedByIDn" integer NOT NULL,
+    "OwnerIDn" integer NOT NULL,
+    "DateCreated" timestamp with time zone NOT NULL,
+    "DateTimeStamp" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "TableHistory" text COLLATE pg_catalog."default",
+    CONSTRAINT "PlaPk_IDNum" PRIMARY KEY ("IDNum"),
+    CONSTRAINT "PlaUnique_ID" UNIQUE ("ID"),
+    CONSTRAINT "PlaUnique_IDArticlePriceList" UNIQUE ("ArticlesIDn", "PriceListIDn")
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."PriceListArticles_Tbl"
+    OWNER to postgres;
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the table fields elements
+-- 
+COMMENT ON TABLE public."PriceListArticles_Tbl"
+    IS 'Contains information on the prices of the items. 
+For each PriceListArticles you can have multiples articles with its prices.
+The unique key: are the join of the pricelistIDn + articlesIDn fields.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."IDNum"
+    IS 'The IDNum is the autoincrement number';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."ID"
+    IS 'The ID is the uniqueidentifier auto generated V4';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."ArticlesIDn"
+    IS 'The ArticlesIDn is the IDNum of the article.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."PriceListIDn"
+    IS 'The PriceListIDn is the IDNum of the PriceList_Tbl.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."Price"
+    IS 'The Price of the article.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."PriceListCode"
+    IS 'The PriceListCode is a specific code that refers to the origin of the price.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."DatePriceListArticle"
+    IS 'The DatePriceListArticle is the date on which the price is set.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."StateIDn"
+    IS 'The StatedIDn is the IDNum that define if the record is enable or not.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."CreatedByIDn"
+    IS 'The CreatedByIDn is the IDNum of the user who created the record.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."LastModifiedByIDn"
+    IS 'The LastModifiedByIDn is the IDNum of the last user who modified the record.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."OwnerIDn"
+    IS 'The OwnerIDn is the IDNum of the record owner.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."DateCreated"
+    IS 'The DateCreated is the record creation datetime UTC.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."DateTimeStamp"
+    IS 'The DateTimeStamp is the datetime UTC of the last modification.';
+
+COMMENT ON COLUMN public."PriceListArticles_Tbl"."TableHistory"
+    IS 'The TableHistory contain then change history of each column.';
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the constraint elements
+-- 
+COMMENT ON CONSTRAINT "PlaUnique_IDArticlePriceList" ON public."PriceListArticles_Tbl"
+    IS 'An Article can be unique for a PriceList.';
+
+-- #########################################################################################################################################################################################
+-- Second create the trigger before insert
+--	Step 1: create the function before insert
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: public.PriceListArticlesBeforeInsert_Tfnc()
+DROP FUNCTION IF EXISTS public."PriceListArticlesBeforeInsert_Tfnc"() CASCADE;
+
+CREATE OR REPLACE FUNCTION public."PriceListArticlesBeforeInsert_Tfnc"()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+BEGIN
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the created date
+	IF NEW."DateCreated" IS NULL THEN 
+		NEW."DateCreated" := CURRENT_TIMESTAMP;
+	END IF;
+RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public."PriceListArticlesBeforeInsert_Tfnc"()
+    OWNER TO postgres;
+
+COMMENT ON FUNCTION public."PriceListArticlesBeforeInsert_Tfnc"()
+    IS 'Create the function to set de current timestamp for the datecreated field.
+	This funtion is used by the PriceListArticles_Tbl before insert trigger.';
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--	Step 2: create the trigger before insert in the PriceListArticles table
+-- Trigger: PriceListArticlesBeforeInsert_Trg
+DROP TRIGGER IF EXISTS "PriceListArticlesBeforeInsert_Trg" ON public."PriceListArticles_Tbl" CASCADE;
+
+CREATE TRIGGER "PriceListArticlesBeforeInsert_Trg"
+    BEFORE INSERT
+    ON public."PriceListArticles_Tbl"
+    FOR EACH ROW
+    EXECUTE FUNCTION public."PriceListArticlesBeforeInsert_Tfnc"();
+
+COMMENT ON TRIGGER "PriceListArticlesBeforeInsert_Trg" ON public."PriceListArticles_Tbl"
+    IS 'Set the datetime UTC of the DateCreated field';
+
+-- #########################################################################################################################################################################################
+-- Third create the trigger before update
+--	Step 1: create the function before update
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: public.PriceListArticlesBeforeUpdate_Tfnc()
+DROP FUNCTION IF EXISTS public."PriceListArticlesBeforeUpdate_Tfnc"() CASCADE;
+
+CREATE OR REPLACE FUNCTION public."PriceListArticlesBeforeUpdate_Tfnc"()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+DECLARE
+	v_TableHistory text;
+	v_TableHistoryOld text;
+BEGIN
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the DateTimeStamp
+	NEW."DateTimeStamp" := CURRENT_TIMESTAMP;
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the created date
+	IF NEW."TableHistory" = 'SetNull' THEN 
+		NEW."TableHistory" := NULL;
+	ELSEIF NEW."TableHistory" = 'SetOff' THEN
+		NEW."TableHistory" := OLD."TableHistory";
+	ELSE
+		v_TableHistoryOld := OLD."TableHistory";
+		v_TableHistory = '';
+		IF NEW."ArticlesIDn" <> OLD."ArticlesIDn" THEN v_TableHistory := OLD."ArticlesIDn"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."PriceListIDn" <> OLD."PriceListIDn" THEN v_TableHistory := OLD."PriceListIDn"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."Price" <> OLD."Price" THEN v_TableHistory := OLD."Price"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."PriceListCode" <> OLD."PriceListCode" THEN v_TableHistory := OLD."PriceListCode"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."DatePriceListArticle" <> OLD."DatePriceListArticle" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."DatePriceListArticle"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."StateIDn" <> OLD."StateIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."StateIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."CreatedByIDn" <> OLD."CreatedByIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."CreatedByIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."LastModifiedByIDn" <> OLD."LastModifiedByIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."LastModifiedByIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."OwnerIDn" <> OLD."OwnerIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."OwnerIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF v_TableHistoryOld IS NULL THEN v_TableHistory := CONCAT(v_TableHistory,'†',NEW."DateCreated"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."DateTimeStamp" <> OLD."DateTimeStamp" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."DateTimeStamp"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF v_TableHistoryOld IS NULL THEN
+			NEW."TableHistory" := v_TableHistory;
+		ELSE
+			NEW."TableHistory" := CONCAT(v_TableHistory,'‡',v_TableHistoryOld);
+		END IF;
+		
+	END IF;
+	RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public."PriceListArticlesBeforeUpdate_Tfnc"()
+    OWNER TO postgres;
+
+COMMENT ON FUNCTION public."PriceListArticlesBeforeUpdate_Tfnc"()
+    IS 'Create the function to set the new datetimestamp and the history of the record.
+	This funtion is used by the PriceListArticles_Tbl before update trigger.';
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--	Step 2: create the trigger before update in the PriceListArticles table
+-- Trigger: PriceListArticlesBeforeUpdate_Trg
+DROP TRIGGER IF EXISTS "PriceListArticlesBeforeUpdate_Trg" ON public."PriceListArticles_Tbl" CASCADE;
+
+CREATE TRIGGER "PriceListArticlesBeforeUpdate_Trg"
+    BEFORE UPDATE 
+    ON public."PriceListArticles_Tbl"
+    FOR EACH ROW
+    EXECUTE FUNCTION public."PriceListArticlesBeforeUpdate_Tfnc"();
+
+COMMENT ON TRIGGER "PriceListArticlesBeforeUpdate_Trg" ON public."PriceListArticles_Tbl"
+    IS 'Set the datetime UTC and the record History.';
