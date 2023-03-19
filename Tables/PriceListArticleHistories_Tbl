@@ -1,0 +1,92 @@
+-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+-- Create the PriceListArticleHistories_Tbl table
+-- Contains the history information on the prices of the items. 
+-- For each PriceListArticle you can have multiples prices histories.
+-- The unique key: are the join of the PriceListArticleIDn + DatePrice fields.
+
+-- #########################################################################################################################################################################################
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- First create the sequence PriceListArticleHistories_seq
+-- 
+DROP SEQUENCE IF EXISTS public."PriceListArticleHistories_Seq" CASCADE;
+
+CREATE SEQUENCE public."PriceListArticleHistories_Seq"
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public."PriceListArticleHistories_Seq"
+    OWNER TO postgres;
+
+COMMENT ON SEQUENCE public."PriceListArticleHistories_Seq"
+    IS 'The sequence PriceListArticleHistories_Tbl_seq generate the nextval of the IDNum';
+
+-- #########################################################################################################################################################################################
+-- Second create the Table
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Table: public.PriceListArticleHistories_Tbl
+DROP TABLE IF EXISTS public."PriceListArticleHistories_Tbl" CASCADE;
+
+CREATE TABLE IF NOT EXISTS public."PriceListArticleHistories_Tbl"
+(
+    "IDNum" integer NOT NULL DEFAULT nextval('"PriceListArticleHistories_Seq"'::regclass),
+    "ID" uuid NOT NULL DEFAULT uuid_generate_v4 (),
+    "PriceListArticleIDn" integer NOT NULL,
+    "DatePrice" timestamp with time zone NOT NULL,
+    "Price" numeric(19, 6) NOT NULL,
+    "DatePriceBefore" integer NOT NULL,
+    "PriceBefore" character varying(250),
+    "StateIDn" smallint NOT NULL,
+    CONSTRAINT "PlhPk_IDNum" PRIMARY KEY ("IDNum"),
+    CONSTRAINT "PlhUnique_ID" UNIQUE ("ID"),
+    CONSTRAINT "PlhUnique_IDPriceListArticleDatePrice" UNIQUE ("PriceListArticleIDn", "DatePrice")
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."PriceListArticleHistories_Tbl"
+    OWNER to postgres;
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the table fields elements
+-- 
+COMMENT ON TABLE public."PriceListArticleHistories_Tbl"
+    IS 'Contains the history information on the prices of the items. 
+-- For each PriceListArticle you can have multiples prices histories.
+The unique key: are the join of the PriceListArticleIDn + DatePrice fields.';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."IDNum"
+    IS 'The IDNum is the autoincrement number';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."ID"
+    IS 'The ID is the uniqueidentifier auto generated V4';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."PriceListArticleIDn"
+    IS 'The PriceListArticleIDn is the IDNum of the article from the PriceListArticles_Tbl.';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."DatePrice"
+    IS 'The DatePrice is the price date on which the price is set. 
+This value is set from the DatePriceListArticle fields of the PriceListArticles_Tbl.';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."Price"
+    IS 'The Price of the article. 
+This value is set from the Price fields of the PriceListArticles_Tbl.';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."DatePriceBefore"
+    IS 'The DatePriceBefore is the price date of the before price of the items.
+This value is set from the DatePriceListArticle fields of the PriceListArticles_Tbl.';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."PriceBefore"
+    IS 'The PriceBefore is the price before of the items.
+This value is set from the Price fields of the PriceListArticles_Tbl.';
+
+COMMENT ON COLUMN public."PriceListArticleHistories_Tbl"."StateIDn"
+    IS 'The StatedIDn is the IDNum that define if the record is enable or not.';
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the constraint elements
+-- 
+COMMENT ON CONSTRAINT "PlhUnique_IDPriceListArticleDatePrice" ON public."PriceListArticleHistories_Tbl"
+    IS 'A PriceListArticle can be unique for a DatePrice.';
